@@ -176,15 +176,10 @@
     transform: translateX(-50%);
     pointer-events: none;
     z-index: 2;
-    /* feather all four edges so the frame melts into the page instead of reading as a box */
-    -webkit-mask-image:
-      linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%),
-      linear-gradient(to bottom, transparent 0, #000 7%, #000 93%, transparent 100%);
-    -webkit-mask-composite: source-in;
-    mask-image:
-      linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%),
-      linear-gradient(to bottom, transparent 0, #000 7%, #000 93%, transparent 100%);
-    mask-composite: intersect;
+    /* feather only the left/right edges — the frame fills top-to-bottom of the band,
+       so a vertical feather there would read as blank space above and below it */
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%);
   }
   .hero-inner { will-change: opacity, transform; }
   .hero-cta { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; will-change: opacity, transform; }
@@ -202,6 +197,15 @@
       width: 100% !important; height: auto !important;
       aspect-ratio: 16 / 9;
       order: 2;
+      /* stacked static layout on mobile: restore the four-edge melt */
+      -webkit-mask-image:
+        linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%),
+        linear-gradient(to bottom, transparent 0, #000 7%, #000 93%, transparent 100%);
+      -webkit-mask-composite: source-in;
+      mask-image:
+        linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%),
+        linear-gradient(to bottom, transparent 0, #000 7%, #000 93%, transparent 100%);
+      mask-composite: intersect;
     }
     .hero-inner { order: 1; }
     .hero-cta { position: static; order: 3; margin: 0; }
@@ -1191,17 +1195,20 @@
   }
   function place(p) {
     if (L.mobile) return 0;
-    /* desktop: video top tracks text bottom, grows to centre as text leaves */
+    /* desktop: the frame fills the whole band below the text — its top tracks the
+       text bottom and rises toward the nav as the text leaves, while the bottom
+       always reaches the viewport floor. Height drives the size; width follows at
+       16:9 and any horizontal overflow is clipped by the hero's overflow:hidden,
+       so there is never a blank letterbox band above or below the video. */
     var s = ease(Math.max(0, Math.min(1, p / 0.5)));
     var navH = 62;
     var tb = L.textBottom + 20;
     var eff = navH + (tb - navH) * (1 - s);
-    var avail2 = L.vh - eff - L.pad;
-    var fw2 = Math.min(L.fwMax, Math.max(140, avail2) * 16 / 9);
-    var fh2 = fw2 * 9 / 16;
+    var fh2 = Math.max(140, L.vh - eff);   /* fill from eff down to the very bottom */
+    var fw2 = fh2 * 16 / 9;
     canvas.style.width = fw2 + 'px';
     canvas.style.height = fh2 + 'px';
-    canvas.style.top = (eff + Math.max(0, (avail2 - fh2) / 2)) + 'px';
+    canvas.style.top = eff + 'px';
     return s;
   }
   function resize() {
@@ -1222,7 +1229,9 @@
     L.pad = 16;
     L.textBottom = heroCta ? heroCta.offsetTop + heroCta.offsetHeight
                   : (heroInner ? heroInner.offsetTop + heroInner.offsetHeight : 300);
-    L.fwMax = Math.min(L.vw, (L.vh - 62 - L.pad) * 16 / 9);
+    /* bitmap sized to the widest the frame can get when it fills the full height,
+       so it stays sharp even where the 16:9 box is wider than the viewport and clipped */
+    L.fwMax = Math.max(L.vw, (L.vh - 62) * 16 / 9);
     canvas.width = Math.round(L.fwMax * dpr);
     canvas.height = Math.round(L.fwMax * 9 / 16 * dpr);
     drawn = -1;
