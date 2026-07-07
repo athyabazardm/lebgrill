@@ -176,10 +176,17 @@
     transform: translateX(-50%);
     pointer-events: none;
     z-index: 2;
-    /* feather only the left/right edges — the frame fills top-to-bottom of the band,
-       so a vertical feather there would read as blank space above and below it */
-    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%);
+    /* soft-feather all four edges so the frame melts into the hero's warm
+       background (colour-matched to the video's own ground) instead of reading
+       as a hard box — a gentle blend, not a blank letterbox band */
+    -webkit-mask-image:
+      linear-gradient(to right, transparent 0, #000 6%, #000 94%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 5%, #000 88%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(to right, transparent 0, #000 6%, #000 94%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 5%, #000 88%, transparent 100%);
+    mask-composite: intersect;
   }
   .hero-inner { will-change: opacity, transform; }
   .hero-cta { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; will-change: opacity, transform; }
@@ -197,15 +204,6 @@
       width: 100% !important; height: auto !important;
       aspect-ratio: 16 / 9;
       order: 2;
-      /* stacked static layout on mobile: restore the four-edge melt */
-      -webkit-mask-image:
-        linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%),
-        linear-gradient(to bottom, transparent 0, #000 7%, #000 93%, transparent 100%);
-      -webkit-mask-composite: source-in;
-      mask-image:
-        linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%),
-        linear-gradient(to bottom, transparent 0, #000 7%, #000 93%, transparent 100%);
-      mask-composite: intersect;
     }
     .hero-inner { order: 1; }
     .hero-cta { position: static; order: 3; margin: 0; }
